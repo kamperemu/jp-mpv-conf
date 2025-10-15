@@ -8,7 +8,7 @@
 
 ------------- Credits -------------
 -- This original script was made by users of 4chan's Daily Japanese Thread (DJT) on /jp/
--- The second version of the script was from animecards.site
+-- The second version of the script can be found here https://mega.nz/folder/349ziIYT#gtEzi4UtnyDVr4_wJAvBlg
 -- The current version of the script removes clipboard copy so websocket can be used (https://github.com/kuroahna/mpv_websocket)
 ------------------------------------
 

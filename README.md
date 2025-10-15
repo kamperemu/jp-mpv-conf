@@ -50,7 +50,7 @@ mpv-x86_64-v3 (click show all to make it visible).
 - [mpv2anki](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) - Automatically sends current screenshot and sentence audio to previously made anki card.
 
 ## Additional Credits
-- [mpv2anki](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) script is originally from [Acacreon Script](https://github.com/friedrich-de/Anacreon-Script), however it is heavily modified from the original script. The main functional difference is that I've removed the ability to select multiple subtitles lines for sentence and sentence audio. Use [this script](https://raw.githubusercontent.com/friedrich-de/Anacreon-Script/refs/heads/main/animecards_v35_modified.lua) instead, if you need that.
+- [mpv2anki](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) script is originally from [Acacreon Script](https://mega.nz/folder/349ziIYT#gtEzi4UtnyDVr4_wJAvBlg), however it is heavily modified from the original script. The main functional difference is that I've removed the ability to select multiple subtitles lines for sentence and sentence audio. Use [this script](https://raw.githubusercontent.com/friedrich-de/Anacreon-Script/refs/heads/main/animecards_v35_modified.lua) instead, if you need that.
 - Inspired by [Zabooby's mpv config](https://github.com/Zabooby/mpv-config).
 
 ## Contributions
