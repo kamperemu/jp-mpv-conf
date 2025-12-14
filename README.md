@@ -36,21 +36,24 @@ mpv-x86_64-v3 (click show all to make it visible).
 
 ## Interface and Keybinds
 - The user interface is minimal and customizable. 
-- The gui elements of uosc are on the top and bottom of the screen and their visibility reacts to cursor proximity. Press right click to pull up the uosc menu.
-- Going to utils > keybindings in the uosc menu will give you a list of all the default keybinds. 
+- The progress bar visibility reacts to cursor proximity to the bottom of the screen. 
+- Press right click to pull up a menu. The menu has GUI for playlist, subtitles, secondary subtitles, subtitle lines, audio tracks and keybindings.
 ### Optional: Advanced configuration
 - Refer to the [manual](https://mpv.io/manual/master/) to edit mpv.conf for general configuration.
-- Refer to [manual](https://mpv.io/manual/master/) and [uosc commands](https://github.com/tomasklaen/uosc#commands) to add keybinds in input.conf.
+- Refer to [manual](https://mpv.io/manual/master/) to edit keybinds in input.conf.
 - Edit script config files in script-opts folder by using the comments.
+- Edit menu items by modifying the menu.lua file in the scripts folder. 
 
 ## Scripts
-- [uosc](https://github.com/darsain/uosc) - Adds a minimalist but highly customisable GUI.
+- [mfpbar](https://codeberg.org/NRK/mpv-toolbox/src/branch/master/mfpbar) - progress-bar with minimal visual-clutter, features, as well as code-size.
 - [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) - Automatically load playlist entries before and after the currently playing file, by scanning the directory.
 - [mpv_websocket](https://github.com/kuroahna/mpv_websocket) - Uses websocket to send subtitle text to [texthooker UI](https://github.com/Renji-XD/texthooker-ui) so you can use a pop up dictionary.
 - [mpv2anki](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) - Automatically sends current screenshot and sentence audio to previously made anki card.
+- [menu](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) - Simple GUI menu for basic tasks.
 
 ## Additional Credits
-- [mpv2anki](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) script is originally from [Acacreon Script](https://mega.nz/folder/349ziIYT#gtEzi4UtnyDVr4_wJAvBlg), however it is heavily modified from the original script. The main functional difference is that I've removed the ability to select multiple subtitles lines for sentence and sentence audio. Use [this script](https://raw.githubusercontent.com/friedrich-de/Anacreon-Script/refs/heads/main/animecards_v35_modified.lua) instead, if you need that.
+- [mpv2anki](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) script is originally from [Acacreon Script](https://mega.nz/folder/349ziIYT#gtEzi4UtnyDVr4_wJAvBlg), however it is heavily modified from the original script.
+- [menu](https://github.com/mpv-player/mpv/blob/master/player/lua/select.lua) script uses code from [select.lua](https://github.com/mpv-player/mpv/blob/master/player/lua/select.lua).
 - Inspired by [Zabooby's mpv config](https://github.com/Zabooby/mpv-config).
 
 ## Contributions
