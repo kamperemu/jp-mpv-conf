@@ -31,11 +31,11 @@ mpv-x86_64-v3 (click show all to make it visible).
 - Open video file with subtitles in mpv (subtitle files will auto load if they are in the same folder with same name as video file).
 - Open [TexthookerUI](https://renji-xd.github.io/texthooker-ui/) (download offline version [here](https://raw.githubusercontent.com/Renji-XD/texthooker-ui/main/docs/index.html)) and connect to the websocket port.
 - Wait for unknown word and add it to anki through texthooker and yomitan.
-- Tab back to MPV and Ctrl + a to send paused sentence audio and image (align paused subtitle appropriately).
+- Tab back to MPV and ctrl + a to send paused sentence audio and image (align paused subtitle appropriately).
 - Resume watching after updated note message popup.
 
 ## Interface and Keybinds
-- The user interface is minimal and customizable. 
+- The user interface is minimal.
 - The progress bar visibility reacts to cursor proximity to the bottom of the screen. 
 - Press right click to pull up a menu. The menu has GUI for playlist, subtitles, secondary subtitles, subtitle lines, audio tracks and keybindings.
 ### Optional: Advanced configuration
@@ -45,11 +45,11 @@ mpv-x86_64-v3 (click show all to make it visible).
 - Edit menu items by modifying the menu.lua file in the scripts folder. 
 
 ## Scripts
-- [mfpbar](https://codeberg.org/NRK/mpv-toolbox/src/branch/master/mfpbar) - progress-bar with minimal visual-clutter, features, as well as code-size.
+- [mfpbar](https://codeberg.org/NRK/mpv-toolbox/src/branch/master/mfpbar) - A progress-bar with minimal visual-clutter, features, as well as code-size.
+- [menu](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) - Simple menu for basic tasks.
 - [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) - Automatically load playlist entries before and after the currently playing file, by scanning the directory.
-- [mpv_websocket](https://github.com/kuroahna/mpv_websocket) - Uses websocket to send subtitle text to [texthooker UI](https://github.com/Renji-XD/texthooker-ui) so you can use a pop up dictionary.
-- [mpv2anki](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) - Automatically sends current screenshot and sentence audio to previously made anki card.
-- [menu](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) - Simple GUI menu for basic tasks.
+- [mpv_websocket](https://github.com/kuroahna/mpv_websocket) - Uses websocket to send subtitle text to [texthooker UI](https://github.com/Renji-XD/texthooker-ui).
+- [mpv2anki](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) - Sends current screenshot and sentence audio to previously made anki card with a hotkey.
 
 ## Additional Credits
 - [mpv2anki](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) script is originally from [Acacreon Script](https://mega.nz/folder/349ziIYT#gtEzi4UtnyDVr4_wJAvBlg), however it is heavily modified from the original script.
