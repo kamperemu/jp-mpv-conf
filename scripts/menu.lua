@@ -1,4 +1,3 @@
-local mp = require 'mp'
 local input = require 'mp.input'
 
 local function show_menu()
@@ -11,6 +10,7 @@ local function show_menu()
         {"Subtitle lines", "script-binding select/select-subtitle-line"},
         {"Audio tracks", "script-binding select/select-aid"},
         {"Key bindings", "script-binding select/select-binding"},
+        {"Grab multiple lines", "script-message grab-multiple-lines"},
     }
 
     local labels = {}
@@ -31,4 +31,15 @@ local function show_menu()
     })
 end
 
-mp.add_key_binding("MOUSE_BTN2", "menu_popup", show_menu)
+-- this function doesn't necessarily belong here, but this is a convenient place
+local function reset_video()
+    mp.set_property_number("video-zoom", 0)
+    mp.set_property_number("panscan", 0)
+    mp.set_property_number("pan-x", 0)
+    mp.set_property_number("pan-y", 0)
+    mp.set_property_number("video-align-x", 0)
+    mp.set_property_number("video-align-y", 0)
+end
+
+mp.register_script_message("reset-video", reset_video)
+mp.register_script_message("menu_popup", show_menu)
