@@ -24,9 +24,12 @@ local options = {
   -- Optional screenshot image format.
   image_format = "webp",
   -- Optional mpv volume to affect Anki card volume.
-  use_mpv_volume = false
+  use_mpv_volume = false,
+  -- Optional play after anki update
+  auto_play_anki = true
 }
 
+local input = require 'mp.input'
 local utils = require 'mp.utils'
 local msg = require 'mp.msg'
 mp.options = require "mp.options"
@@ -45,6 +48,11 @@ end
 
 local function get_name(s, e)
   return mp.get_property("filename"):gsub('%W','').. tostring(s) .. tostring(e)
+end
+
+local function format_time(t, duration)
+    local fmt = math.max(t, duration) >= 60 * 60 and "%H:%M:%S" or "%M:%S"
+    return mp.format_time(t, fmt)
 end
 
 local function create_audio(s, e)
@@ -165,20 +173,45 @@ local function get_extract()
   local lines = mp.get_property_native("sub-text")
   dlog(lines)
 
+  if lines == nil or lines == "" then
+    local time_pos = math.min(mp.get_property_number("time-pos"))
+    create_screenshot(time_pos, time_pos)
+    local ifield = '<img src='.. get_name(time_pos,time_pos) ..'.' .. options.image_format .. '>'
+    add_to_last_added(ifield, "", "")
+    return
+  end 
+
   local sub_delay = mp.get_property_native("sub-delay")
   local audio_delay = mp.get_property_native("audio-delay")
   local s = math.min(mp.get_property_number('sub-start') + sub_delay - audio_delay)
   local e = math.max(mp.get_property_number('sub-end') + sub_delay - audio_delay)
   dlog(string.format('s=%d, e=%d', s, e))
+  if options.auto_play_anki then
+    mp.set_property_bool("pause", false)
+  end
 
   if e ~= 0 then
     create_screenshot(s, e)
     create_audio(s, e)
     local ifield = '<img src='.. get_name(s,e) ..'.' .. options.image_format .. '>'
     local afield = "[sound:".. get_name(s,e) .. ".mp3]"
-    local tfield = string.gsub(string.gsub(lines,"\n+", "<br />"), "\r", "")
+    local tfield = lines:gsub("\n", "<br />")
     add_to_last_added(ifield, afield, tfield)
   end
+end
+
+local function get_multiple_extract(tfield, s, e)
+  s = tonumber(s)
+  e = tonumber(e)
+  prefix = anki_connect('getMediaDirPath')["result"]
+  dlog(prefix)
+
+  create_screenshot(s, e)
+  create_audio(s, e)
+  local ifield = '<img src='.. get_name(s,e) ..'.' .. options.image_format .. '>'
+  local afield = "[sound:".. get_name(s,e) .. ".mp3]"
+  local tfield = tfield
+  add_to_last_added(ifield, afield, tfield)
 end
 
 local function ex()
@@ -189,5 +222,163 @@ local function ex()
   end
 end
 
-mp.add_key_binding("ctrl+a", "update-anki-card", ex)
-mp.add_key_binding("ctrl+A", ex)
+local function exm(tfield, s, e)
+  if debug_mode then
+    get_multiple_extract(tfield, s, e)
+  else
+    pcall(get_multiple_extract, tfield, s, e)
+  end
+end
+
+local function grab_multiple_lines()
+    local sub = mp.get_property_native("current-tracks/sub")
+
+    if sub == nil then
+        show_warning("No subtitle is loaded.")
+        return
+    end
+
+    if sub.external and sub["external-filename"]:find("^edl://") then
+        sub["external-filename"] = sub["external-filename"]:match('https?://.*')
+                                   or sub["external-filename"]
+    end
+
+    local r = mp.command_native({
+        name = "subprocess",
+        capture_stdout = true,
+        args = sub.external
+            and {"ffmpeg", "-loglevel", "error", "-i", sub["external-filename"],
+                 "-f", "lrc", "-map_metadata", "-1", "-fflags", "+bitexact", "-"}
+            or {"ffmpeg", "-loglevel", "error", "-i", mp.get_property("path"),
+                "-map", "s:" .. sub["id"] - 1, "-f", "lrc", "-map_metadata",
+                "-1", "-fflags", "+bitexact", "-"}
+    })
+
+    if r.error_string == "init" then
+        show_error("Failed to extract subtitles: ffmpeg not found.")
+        return
+    elseif r.status ~= 0 then
+        show_error("Failed to extract subtitles.")
+        return
+    end
+
+    local sub_lines = {}
+    local sub_times = {}
+    local default_item
+    local delay = mp.get_property_native("sub-delay")
+    local time_pos = mp.get_property_native("time-pos") - delay
+    local duration = mp.get_property_native("duration", math.huge)
+    local sub_content = {}
+
+    -- Strip HTML and ASS tags and process subtitles
+    for line in r.stdout:gmatch("[^\n]+") do
+        -- Clean up tags
+        local sub_line = line:gsub("<.->", "")                -- Strip HTML tags
+                             :gsub("\\h+", " ")               -- Replace '\h' tag
+                             :gsub("{[\\=].-}", "")           -- Remove ASS formatting
+                             :gsub(".-]", "", 1)              -- Remove time info prefix
+                             :gsub("^%s*(.-)%s*$", "%1")      -- Strip whitespace
+                             :gsub("^m%s[mbl%s%-%d%.]+$", "") -- Remove graphics code
+
+        if sub.codec == "text" or (sub_line ~= "" and sub_line:match("^%s+$") == nil) then
+            local sub_time = line:match("%d+") * 60 + line:match(":([%d%.]*)")
+            local time_seconds = math.floor(sub_time)
+            sub_content[time_seconds] = sub_content[time_seconds] or {}
+            sub_content[time_seconds][sub_line] = true
+        end
+    end
+
+    -- Process all timestamps and content into selectable subtitle list
+    for time_seconds, contents in pairs(sub_content) do
+        for sub_line in pairs(contents) do
+            sub_times[#sub_times + 1] = time_seconds
+            sub_lines[#sub_lines + 1] = format_time(time_seconds, duration) .. " " .. sub_line
+        end
+    end
+
+    -- Generate time -> subtitle mapping
+    local time_to_lines = {}
+    for i = 1, #sub_times do
+        local time = sub_times[i]
+        local line = sub_lines[i]
+
+        if not time_to_lines[time] then
+            time_to_lines[time] = {}
+        end
+        table.insert(time_to_lines[time], line)
+    end
+
+    -- Sort by timestamp
+    local sorted_sub_times = {}
+    for i = 1, #sub_times do
+        sorted_sub_times[i] = sub_times[i]
+    end
+    table.sort(sorted_sub_times)
+
+    -- Use a helper table to avoid duplicates
+    local added_times = {}
+
+    -- Rebuild sub_lines and sub_times based on the sorted timestamps
+    local sorted_sub_lines = {}
+    for _, sub_time in ipairs(sorted_sub_times) do
+        -- Iterate over all subtitle content for this timestamp
+        if not added_times[sub_time] then
+            added_times[sub_time] = true
+            for _, line in ipairs(time_to_lines[sub_time]) do
+                table.insert(sorted_sub_lines, line)
+            end
+        end
+    end
+
+    -- Use the sorted subtitle list
+    sub_lines = sorted_sub_lines
+    sub_times = sorted_sub_times
+
+    -- Get the default item (last subtitle before current time position)
+    for i, sub_time in ipairs(sub_times) do
+        if sub_time <= time_pos then
+            default_item = i
+        end
+    end
+
+    input.select({
+        prompt = "Select the FIRST line:",
+        items = sub_lines,
+        default_item = default_item,
+        submit = function (start_index)
+            -- Create a new list for the second menu containing only lines
+            -- from the start_index onwards (removing previous lines)
+            local end_selection_items = {}
+            for i = start_index, #sub_lines do
+                table.insert(end_selection_items, sub_lines[i])
+            end
+
+            -- Open the second menu
+            input.select({
+                prompt = "Select the LAST line:",
+                items = end_selection_items,
+                default_item = 1, -- Default to the line just selected
+                submit = function (relative_end_index)
+                    -- Calculate the absolute index of the last line
+                    local end_index = start_index + relative_end_index - 1
+                    
+                    -- Create the final list of lines (removing everything after end_index)
+                    local result_lines = {}
+                    for i = start_index, end_index do
+                        local full_line = sub_lines[i]:gsub("^[^%s]+%s+", "")
+                        table.insert(result_lines, full_line)
+                    end
+                    tfield = table.concat(result_lines, "<br />")
+
+                    local start_time = sub_times[start_index]
+                    local end_time = sub_times[end_index + 1]
+
+                    exm(tfield, start_time, end_time)
+                end,
+            })
+        end,
+    })
+end
+
+mp.register_script_message("update-anki-card", ex)
+mp.register_script_message("grab-multiple-lines", grab_multiple_lines)
