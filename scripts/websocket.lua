@@ -8,7 +8,7 @@ local platform = mp.get_property_native("platform")
 local config_file_path = mp.find_config_file("mpv.conf")
 local config_folder_path, config_file = utils.split_path(config_file_path)
 local mpv_websocket_path =
-  utils.join_path(config_folder_path, platform == "windows" and "mpv_websocket.exe" or "mpv_websocket")
+  utils.join_path(config_folder_path, platform == "windows" and "script-opts\\mpv_websocket.exe" or "scripts-opts/mpv_websocket")
 local initialised_websocket
 
 local _, err = utils.file_info(config_file_path)
