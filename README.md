@@ -1,7 +1,7 @@
 # MPV Configuration Files for Mining to Anki
 
 Just my personal config files for mining to anki in [mpv](https://mpv.io/), a free, open-source, & cross-platform media player. \
-Apart from mining scripts the configuration also includes minimalist UI, gpu acceleration, font configurations, subtitle configurations, autoloading subtitles, video configurations and autoloading videos. 
+Apart from mining scripts the configuration also includes minimalist UI, gpu acceleration, font configurations, subtitle configurations, autoloading subtitles and autoloading playlist.
 
 > Before you start using this, please take your time to read this whole README as common issues can be easily solved by simply reading carefully.
 
@@ -24,7 +24,7 @@ mpv-x86_64-v3 (click show all to make it visible).
 - Untested for MacOS.
 - Install mpv from https://mpv.io/installation/.
 - Download and extract contents of this repository into ~/.config/mpv.
-- Replace mpv_websocket binary with relevant binary from https://github.com/kuroahna/mpv_websocket/releases.
+- Replace mpv_websocket binary in ~/.config/mpv/scripts-opts with relevant binary from https://github.com/kuroahna/mpv_websocket/releases.
 - Go to script-opts/mpv2anki.conf and set image_format to png.
 
 ## Mining
@@ -33,6 +33,7 @@ mpv-x86_64-v3 (click show all to make it visible).
 - Wait for unknown word and add it to anki through texthooker and yomitan.
 - Tab back to MPV and ctrl + a to send paused sentence audio and image (align paused subtitle appropriately).
 - Resume watching after updated note message popup.
+- Optional: if you need to mine multiple lines you can do so with the grab multiple lines in the menu or hotkey. 
 
 ## Interface and Keybinds
 - The user interface is minimal.
@@ -47,7 +48,6 @@ mpv-x86_64-v3 (click show all to make it visible).
 ## Scripts
 - [mfpbar](https://codeberg.org/NRK/mpv-toolbox/src/branch/master/mfpbar) - A progress-bar with minimal visual-clutter, features, as well as code-size.
 - [menu](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) - Simple menu for basic tasks.
-- [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) - Automatically load playlist entries before and after the currently playing file, by scanning the directory.
 - [mpv_websocket](https://github.com/kuroahna/mpv_websocket) - Uses websocket to send subtitle text to [texthooker UI](https://github.com/Renji-XD/texthooker-ui).
 - [mpv2anki](https://raw.githubusercontent.com/kamperemu/jp-mpv-conf/refs/heads/master/scripts/mpv2anki.lua) - Sends current screenshot and sentence audio to previously made anki card with a hotkey.
 
