@@ -50,11 +50,6 @@ local function get_name(s, e)
   return mp.get_property("filename"):gsub('%W','').. tostring(s) .. tostring(e)
 end
 
-local function format_time(t, duration)
-    local fmt = math.max(t, duration) >= 60 * 60 and "%H:%M:%S" or "%M:%S"
-    return mp.format_time(t, fmt)
-end
-
 local function create_audio(s, e)
 
   if s == nil or e == nil then
@@ -149,6 +144,8 @@ local function add_to_last_added(ifield, afield, tfield)
 
   if note ~= nil then
     local word = note["result"][1]["fields"][options.front_field]["value"]
+	word = word:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
+	tfield = tfield:gsub(word, "<b>%0</b>")
     local new_fields = {
       [options.sentence_audio_field]=afield,
       [options.sentence_field]=tfield,
@@ -201,8 +198,9 @@ local function get_extract()
 end
 
 local function get_multiple_extract(tfield, s, e)
-  s = tonumber(s)
-  e = tonumber(e)
+	if options.auto_play_anki then
+    mp.set_property_bool("pause", false)
+  end
   prefix = anki_connect('getMediaDirPath')["result"]
   dlog(prefix)
 
@@ -240,7 +238,7 @@ local function grab_multiple_lines()
 
     if sub.external and sub["external-filename"]:find("^edl://") then
         sub["external-filename"] = sub["external-filename"]:match('https?://.*')
-                                   or sub["external-filename"]
+                                    or sub["external-filename"]
     end
 
     local r = mp.command_native({
@@ -248,9 +246,9 @@ local function grab_multiple_lines()
         capture_stdout = true,
         args = sub.external
             and {"ffmpeg", "-loglevel", "error", "-i", sub["external-filename"],
-                 "-f", "lrc", "-map_metadata", "-1", "-fflags", "+bitexact", "-"}
+                "-f", "srt", "-map_metadata", "-1", "-fflags", "+bitexact", "-"}
             or {"ffmpeg", "-loglevel", "error", "-i", mp.get_property("path"),
-                "-map", "s:" .. sub["id"] - 1, "-f", "lrc", "-map_metadata",
+                "-map", "s:" .. sub["id"] - 1, "-f", "srt", "-map_metadata",
                 "-1", "-fflags", "+bitexact", "-"}
     })
 
@@ -262,121 +260,84 @@ local function grab_multiple_lines()
         return
     end
 
+    -- Data storage
+    local sub_data = {}
     local sub_lines = {}
-    local sub_times = {}
-    local default_item
     local delay = mp.get_property_native("sub-delay")
     local time_pos = mp.get_property_native("time-pos") - delay
     local duration = mp.get_property_native("duration", math.huge)
-    local sub_content = {}
+    local default_index = 0
 
-    -- Strip HTML and ASS tags and process subtitles
-    for line in r.stdout:gmatch("[^\n]+") do
-        -- Clean up tags
-        local sub_line = line:gsub("<.->", "")                -- Strip HTML tags
-                             :gsub("\\h+", " ")               -- Replace '\h' tag
-                             :gsub("{[\\=].-}", "")           -- Remove ASS formatting
-                             :gsub(".-]", "", 1)              -- Remove time info prefix
-                             :gsub("^%s*(.-)%s*$", "%1")      -- Strip whitespace
-                             :gsub("^m%s[mbl%s%-%d%.]+$", "") -- Remove graphics code
+    local output = r.stdout:gsub("\r\n", "\n") .. "\n\n"
 
-        if sub.codec == "text" or (sub_line ~= "" and sub_line:match("^%s+$") == nil) then
-            local sub_time = line:match("%d+") * 60 + line:match(":([%d%.]*)")
-            local time_seconds = math.floor(sub_time)
-            sub_content[time_seconds] = sub_content[time_seconds] or {}
-            sub_content[time_seconds][sub_line] = true
-        end
-    end
+    for block in output:gmatch("(.-)\n\n") do
+        -- Updated Pattern: Capture Start Time, End Time, and Text Content
+        -- Matches: Index -> newline -> (StartTime) --> (EndTime) -> newline -> (Text)
+        local s_time_str, e_time_str, text_content = block:match("^[^\n]+\n(.-)%s%-%->%s(.-)\n(.*)")
 
-    -- Process all timestamps and content into selectable subtitle list
-    for time_seconds, contents in pairs(sub_content) do
-        for sub_line in pairs(contents) do
-            sub_times[#sub_times + 1] = time_seconds
-            sub_lines[#sub_lines + 1] = format_time(time_seconds, duration) .. " " .. sub_line
-        end
-    end
+        if text_content then
+            local merged = text_content:gsub("\n", " ")
+            merged = merged:match("^%s*(.-)%s*$")
 
-    -- Generate time -> subtitle mapping
-    local time_to_lines = {}
-    for i = 1, #sub_times do
-        local time = sub_times[i]
-        local line = sub_lines[i]
+            if merged and merged ~= "" then
+                local sh, sm, ss, sms = s_time_str:match("(%d+):(%d+):(%d+),(%d+)")
+                local s_time = tonumber(sh) * 3600 + tonumber(sm) * 60 + tonumber(ss)
+                local eh, em, es, ems = e_time_str:match("(%d+):(%d+):(%d+),(%d+)")
+                local e_time = tonumber(eh) * 3600 + tonumber(em) * 60 + tonumber(es)
+                -- Store the full data object
+                table.insert(sub_data, {
+                    text = merged,
+                    start_sec = s_time,
+                    end_sec = e_time
+                })
+                
+				s_time_str = mp.format_time(s_time, math.max(s_time, duration) >= 60 * 60 and "%H:%M:%S" or "%M:%S")
+                -- Store just the text for the input menu
+                table.insert(sub_lines,  s_time_str .. " " .. merged)
 
-        if not time_to_lines[time] then
-            time_to_lines[time] = {}
-        end
-        table.insert(time_to_lines[time], line)
-    end
-
-    -- Sort by timestamp
-    local sorted_sub_times = {}
-    for i = 1, #sub_times do
-        sorted_sub_times[i] = sub_times[i]
-    end
-    table.sort(sorted_sub_times)
-
-    -- Use a helper table to avoid duplicates
-    local added_times = {}
-
-    -- Rebuild sub_lines and sub_times based on the sorted timestamps
-    local sorted_sub_lines = {}
-    for _, sub_time in ipairs(sorted_sub_times) do
-        -- Iterate over all subtitle content for this timestamp
-        if not added_times[sub_time] then
-            added_times[sub_time] = true
-            for _, line in ipairs(time_to_lines[sub_time]) do
-                table.insert(sorted_sub_lines, line)
+                if s_time <= time_pos then
+                    default_index = default_index + 1
+                end
             end
         end
     end
 
-    -- Use the sorted subtitle list
-    sub_lines = sorted_sub_lines
-    sub_times = sorted_sub_times
-
-    -- Get the default item (last subtitle before current time position)
-    for i, sub_time in ipairs(sub_times) do
-        if sub_time <= time_pos then
-            default_item = i
-        end
-    end
-
+-- UI Selection
     input.select({
         prompt = "Select the FIRST line:",
         items = sub_lines,
-        default_item = default_item,
-        submit = function (start_index)
-            -- Create a new list for the second menu containing only lines
+        default_item = default_index,
+        submit = function(start_index)
+			-- Create a new list for the second menu containing only lines
             -- from the start_index onwards (removing previous lines)
             local end_selection_items = {}
-            for i = start_index, #sub_lines do
+			for i = start_index, #sub_lines do
                 table.insert(end_selection_items, sub_lines[i])
             end
-
-            -- Open the second menu
-            input.select({
+			
+			-- Open the second menu
+			input.select({
                 prompt = "Select the LAST line:",
                 items = end_selection_items,
-                default_item = 1, -- Default to the line just selected
+                default_item = 1,
                 submit = function (relative_end_index)
-                    -- Calculate the absolute index of the last line
+					-- Calculate the absolute index of the last line
                     local end_index = start_index + relative_end_index - 1
-                    
+					
                     -- Create the final list of lines (removing everything after end_index)
-                    local result_lines = {}
-                    for i = start_index, end_index do
-                        local full_line = sub_lines[i]:gsub("^[^%s]+%s+", "")
-                        table.insert(result_lines, full_line)
-                    end
-                    tfield = table.concat(result_lines, "<br />")
+					local result_lines = {}
+					for i = start_index, end_index do
+						table.insert(result_lines, sub_data[i].text)
+					end
+					tfield = table.concat(result_lines, "<br />")
 
-                    local start_time = sub_times[start_index]
-                    local end_time = sub_times[end_index + 1]
+					local start_time = sub_data[start_index].start_sec
+					local end_time = sub_data[end_index].end_sec
 
-                    exm(tfield, start_time, end_time)
+					exm(tfield, start_time, end_time)
                 end,
             })
-        end,
+        end
     })
 end
 
