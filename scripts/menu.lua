@@ -91,6 +91,12 @@ local function select_subtitle_lines_fixed()
         if text_content then
             local merged = text_content:gsub("\n", " ")
             merged = merged:match("^%s*(.-)%s*$")
+            merged = merged:gsub("<.->", "")                -- Strip HTML tags
+                           :gsub("\\h+", " ")               -- Replace '\h' tag
+                           :gsub("{[\\=].-}", "")           -- Remove ASS formatting
+                           :gsub(".-]", "", 1)              -- Remove time info prefix
+                           :gsub("^%s*(.-)%s*$", "%1")      -- Strip whitespace
+                           :gsub("^m%s[mbl%s%-%d%.]+$", "") -- Remove graphics code
 
             if merged and merged ~= "" then
                 -- Store the full data object
