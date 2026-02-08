@@ -281,7 +281,6 @@ local function grab_multiple_lines()
             merged = merged:gsub("<.->", "")                -- Strip HTML tags
                            :gsub("\\h+", " ")               -- Replace '\h' tag
                            :gsub("{[\\=].-}", "")           -- Remove ASS formatting
-                           :gsub(".-]", "", 1)              -- Remove time info prefix
                            :gsub("^%s*(.-)%s*$", "%1")      -- Strip whitespace
                            :gsub("^m%s[mbl%s%-%d%.]+$", "") -- Remove graphics code
 
@@ -306,6 +305,10 @@ local function grab_multiple_lines()
                 end
             end
         end
+    end
+  
+    if default_index == 0 then
+        default_index = 1
     end
 
 -- UI Selection

@@ -86,7 +86,7 @@ local function select_subtitle_lines_fixed()
     for block in output:gmatch("(.-)\n\n") do
         -- Updated Pattern: Capture Start Time, End Time, and Text Content
         -- Matches: Index -> newline -> (StartTime) --> (EndTime) -> newline -> (Text)
-        local s_time_str, e_time_str, text_content = block:match("^[^\n]+\n(.-)%s%-%->%s(.-)\n(.*)")
+        local s_time_str, e_time_str, text_content = block:match("(%d+:%d+:%d+,%d+)%s%-%->%s(.-)\n(.*)")
 
         if text_content then
             local merged = text_content:gsub("\n", " ")
@@ -94,7 +94,6 @@ local function select_subtitle_lines_fixed()
             merged = merged:gsub("<.->", "")                -- Strip HTML tags
                            :gsub("\\h+", " ")               -- Replace '\h' tag
                            :gsub("{[\\=].-}", "")           -- Remove ASS formatting
-                           :gsub(".-]", "", 1)              -- Remove time info prefix
                            :gsub("^%s*(.-)%s*$", "%1")      -- Strip whitespace
                            :gsub("^m%s[mbl%s%-%d%.]+$", "") -- Remove graphics code
 
@@ -114,6 +113,10 @@ local function select_subtitle_lines_fixed()
                 end
             end
         end
+    end
+
+    if default_index == 0 then
+        default_index = 1
     end
 
     input.select({
