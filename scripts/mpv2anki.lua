@@ -118,11 +118,13 @@ local function add_to_last_added(ifield, afield, tfield)
 
   if note ~= nil then
     local word = note["result"][1]["fields"][options.front_field]["value"]
-	word = word:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
-	tfield = tfield:gsub(word, "<b>%0</b>")
+    local sentence = note["result"][1]["fields"][options.sentence_field]["value"]
+
+    tfield = tfield:gsub(sentence:match("<b>(.-)</b>"), "<b>%0</b>")
+    
     local new_fields = {
-      [options.sentence_audio_field]=afield,
       [options.sentence_field]=tfield,
+      [options.sentence_audio_field]=afield,
       [options.image_field]=ifield
     }
 
