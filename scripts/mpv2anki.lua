@@ -96,33 +96,8 @@ local function create_audio(s, e)
 end
 
 local function create_screenshot(s, e)
-  local source = mp.get_property("path")
   local img = utils.join_path(prefix, get_name(s,e) .. '.' .. options.image_format)
-
-  local cmd = {
-    'run',
-    'mpv',
-    source,
-    '--loop-file=no',
-    '--audio=no',
-    '--no-ocopy-metadata',
-    '--no-sub',
-    '--frames=1',
-  }
-  if options.image_format == 'webp' then
-    table.insert(cmd, '--ovc=libwebp')
-    table.insert(cmd, '--ovcopts-add=lossless=0')
-    table.insert(cmd, '--ovcopts-add=compression_level=6')
-    table.insert(cmd, '--ovcopts-add=preset=drawing')
-  elseif options.image_format == 'png' then
-    table.insert(cmd, '--vf-add=format=rgb24')
-    table.insert(cmd, '--ovc=png')
-  end
-  table.insert(cmd, '--vf-add=scale=480*iw*sar/ih:480')
-  table.insert(cmd, string.format('--start=%.3f', mp.get_property_number("time-pos")))
-  table.insert(cmd, string.format('-o=%s', img))
-  mp.commandv(table.unpack(cmd))
-  dlog(utils.to_string(cmd))
+  mp.commandv('screenshot-to-file', img, 'video') 
 end
 
 local function anki_connect(action, params)
