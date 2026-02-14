@@ -62,14 +62,12 @@ local function create_audio(s, e)
   local t = e - s + options.audio_clip_padding
   local source = mp.get_property("path")
   local aid = mp.get_property("aid")
-  
-  local tracks_count = mp.get_property_number("track-list/count")
-  for i = 1, tracks_count do
-    local track_type = mp.get_property(string.format("track-list/%d/type", i))
-    local track_selected = mp.get_property(string.format("track-list/%d/selected", i))
-    if track_type == "audio" and track_selected == "yes" then
-      if mp.get_property(string.format("track-list/%d/external-filename", i), o) ~= o then
-        source = mp.get_property(string.format("track-list/%d/external-filename", i))
+
+  local tracks = mp.get_property_native("track-list")
+  for _, track in ipairs(tracks) do
+    if track["type"] == "audio" and track["selected"] then
+      if track["external-filename"] then
+        source = track["external-filename"]
         aid = 'auto'
       end
       break
@@ -118,6 +116,7 @@ local function create_screenshot(s, e)
     table.insert(cmd, '--ovcopts-add=preset=drawing')
   elseif options.image_format == 'png' then
     table.insert(cmd, '--vf-add=format=rgb24')
+    table.insert(cmd, '--ovc=png')
   end
   table.insert(cmd, '--vf-add=scale=480*iw*sar/ih:480')
   table.insert(cmd, string.format('--start=%.3f', mp.get_property_number("time-pos")))
