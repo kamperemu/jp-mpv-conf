@@ -204,6 +204,20 @@ local function exm(tfield, s, e)
   end
 end
 
+local function show_warning(message)
+    mp.msg.warn(message)
+    if mp.get_property_native("vo-configured") then
+        mp.osd_message(message)
+    end
+end
+
+local function show_error(message)
+    mp.msg.error(message)
+    if mp.get_property_native("vo-configured") then
+        mp.osd_message(message)
+    end
+end
+
 local function grab_multiple_lines()
     local sub = mp.get_property_native("current-tracks/sub")
 

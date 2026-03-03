@@ -41,6 +41,20 @@ local function reset_video()
     mp.set_property_number("video-align-y", 0)
 end
 
+local function show_warning(message)
+    mp.msg.warn(message)
+    if mp.get_property_native("vo-configured") then
+        mp.osd_message(message)
+    end
+end
+
+local function show_error(message)
+    mp.msg.error(message)
+    if mp.get_property_native("vo-configured") then
+        mp.osd_message(message)
+    end
+end
+
 local function select_subtitle_lines_fixed()
     local sub = mp.get_property_native("current-tracks/sub")
 
