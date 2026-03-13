@@ -23,6 +23,8 @@ local options = {
   audio_clip_padding = 0.75,
   -- Optional screenshot image format.
   image_format = "webp",
+  -- Optional audio format.
+  audio_format = "mp3",
   -- Optional mpv volume to affect Anki card volume.
   use_mpv_volume = false,
   -- Optional play after anki update
@@ -57,7 +59,7 @@ local function create_audio(s, e)
   end
 
   local name = get_name(s, e)
-  local destination = utils.join_path(prefix, name .. '.mp3')
+  local destination = utils.join_path(prefix, name .. '.' .. options.audio_format)
   s = s - options.audio_clip_padding
   local t = e - s + options.audio_clip_padding
   local source = mp.get_property("path")
@@ -167,7 +169,7 @@ local function get_extract()
     create_screenshot(s, e)
     create_audio(s, e)
     local ifield = '<img src='.. get_name(s,e) ..'.' .. options.image_format .. '>'
-    local afield = "[sound:".. get_name(s,e) .. ".mp3]"
+    local afield = "[sound:".. get_name(s,e) .. '.' .. options.audio_format .. "]"
     local tfield = lines:gsub("\n", "<br />")
     add_to_last_added(ifield, afield, tfield)
   end
@@ -183,7 +185,7 @@ local function get_multiple_extract(tfield, s, e)
   create_screenshot(s, e)
   create_audio(s, e)
   local ifield = '<img src='.. get_name(s,e) ..'.' .. options.image_format .. '>'
-  local afield = "[sound:".. get_name(s,e) .. ".mp3]"
+  local afield = "[sound:".. get_name(s,e) .. '.' .. options.audio_format .. "]"
   local tfield = tfield
   add_to_last_added(ifield, afield, tfield)
 end
